@@ -61,27 +61,28 @@ func _process(delta):
 	# Move left pad - AI
 	var left_pos = get_node("left").position
 
-	var ai_movement = player_ai(ball_pos, previous_ball_pos, get_node("left").position)
-	if (left_pos.y > left_rect.size.y / 2 and ai_movement == PLAYER_MOVEMENTS.DOWN):
+	var left_ai_movement = player_ai(ball_pos, previous_ball_pos, get_node("left").position)
+	if (left_pos.y > left_rect.size.y / 2 and left_ai_movement == PLAYER_MOVEMENTS.DOWN):
 		left_pos.y += -PAD_SPEED * delta
-	if (left_pos.y < screen_size.y - left_rect.size.y / 2 and ai_movement == PLAYER_MOVEMENTS.UP):
+	if (left_pos.y < screen_size.y - left_rect.size.y / 2 and left_ai_movement == PLAYER_MOVEMENTS.UP):
 		left_pos.y += PAD_SPEED * delta
 
 	get_node("left").position = left_pos
 
-	# Move right pad
+	# Move right pad - AI too
 	var right_pos = get_node("right").position
 
-	if (right_pos.y > right_rect.size.y / 2 and Input.is_action_pressed("right_move_up")):
+	var right_ai_movement = player_ai(ball_pos, previous_ball_pos, get_node("right").position)
+	if (right_pos.y > right_rect.size.y / 2 and right_ai_movement == PLAYER_MOVEMENTS.DOWN):
 		right_pos.y += -PAD_SPEED * delta
-	if (right_pos.y < screen_size.y - right_rect.size.y / 2 and Input.is_action_pressed("right_move_down")):
+	if (right_pos.y < screen_size.y - right_rect.size.y / 2 and right_ai_movement == PLAYER_MOVEMENTS.UP):
 		right_pos.y += PAD_SPEED * delta
 
 	get_node("right").position = right_pos
 
 
 func player_ai(ball_pos, prev_ball_pos, paddle_pos):
-	var ball_y_prediction = predict(ball_pos, prev_ball_pos, get_node("left").position.x)
+	var ball_y_prediction = predict(ball_pos, prev_ball_pos, paddle_pos.x)
 	if (ball_y_prediction > paddle_pos.y):
 		return PLAYER_MOVEMENTS.UP
 	else:
