@@ -11,8 +11,9 @@ enum PLAYER_MOVEMENTS {
 # Declare member variables here. Examples:
 var screen_size
 var pad_size
-var direction = Vector2(1.0, 0.0)
+var direction = Vector2(1.0, 1.0)
 var ball_speed = INITIAL_BALL_SPEED
+var previous_ball_pos = Vector2(1, 1)
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -25,6 +26,9 @@ func _process(delta):
 	var ball_pos = get_node("ball").position
 	var left_rect = Rect2(get_node("left").position - pad_size*0.5, pad_size)
 	var right_rect = Rect2(get_node("right").position - pad_size*0.5, pad_size)
+
+	# Record previous ball position
+	previous_ball_pos = ball_pos
 
 	# Integrate new ball position
 	ball_pos += direction * ball_speed * delta
@@ -57,7 +61,7 @@ func _process(delta):
 	# Move left pad - AI
 	var left_pos = get_node("left").position
 
-	var ai_movement = player_ai(ball_pos, get_node("left").position)
+	var ai_movement = player_ai(ball_pos, previous_ball_pos, get_node("left").position)
 	if (left_pos.y > left_rect.size.y / 2 and ai_movement == PLAYER_MOVEMENTS.DOWN):
 		left_pos.y += -PAD_SPEED * delta
 	if (left_pos.y < screen_size.y - left_rect.size.y / 2 and ai_movement == PLAYER_MOVEMENTS.UP):
@@ -76,8 +80,23 @@ func _process(delta):
 	get_node("right").position = right_pos
 
 
-func player_ai(ball_pos, paddle_pos):
-	if (ball_pos.y > paddle_pos.y):
+func player_ai(ball_pos, prev_ball_pos, paddle_pos):
+	var ball_y_prediction = predict(ball_pos, prev_ball_pos, get_node("left").position.x)
+	if (ball_y_prediction > paddle_pos.y):
 		return PLAYER_MOVEMENTS.UP
 	else:
 		return PLAYER_MOVEMENTS.DOWN
+
+func predict(curr_pos, prev_pos, x_intersect):
+	var y_2 = curr_pos.y
+	var y_1 = prev_pos.y
+
+	var x_2 = curr_pos.x
+	var x_1 = prev_pos.x
+
+	if (x_2 == x_1):
+		x_1 += 1
+
+	var y = (((y_2 - y_1) / (x_2 - x_1)) * (x_intersect - x_1)) + y_1
+
+	return y
