@@ -3,6 +3,11 @@ extends Node2D
 const INITIAL_BALL_SPEED = 80 # px/s
 const PAD_SPEED = 150 # px/s
 
+enum PLAYER_MOVEMENTS {
+	UP,
+	DOWN,
+}
+
 # Declare member variables here. Examples:
 var screen_size
 var pad_size
@@ -49,12 +54,13 @@ func _process(delta):
 	# Set new position to ball.
 	get_node("ball").position = ball_pos
 
-	# Move left pad
+	# Move left pad - AI
 	var left_pos = get_node("left").position
 
-	if (left_pos.y > left_rect.size.y / 2 and Input.is_action_pressed("left_move_up")):
+	var ai_movement = player_ai(ball_pos, get_node("left").position)
+	if (left_pos.y > left_rect.size.y / 2 and ai_movement == PLAYER_MOVEMENTS.DOWN):
 		left_pos.y += -PAD_SPEED * delta
-	if (left_pos.y < screen_size.y - left_rect.size.y / 2 and Input.is_action_pressed("left_move_down")):
+	if (left_pos.y < screen_size.y - left_rect.size.y / 2 and ai_movement == PLAYER_MOVEMENTS.UP):
 		left_pos.y += PAD_SPEED * delta
 
 	get_node("left").position = left_pos
@@ -68,3 +74,10 @@ func _process(delta):
 		right_pos.y += PAD_SPEED * delta
 
 	get_node("right").position = right_pos
+
+
+func player_ai(ball_pos, paddle_pos):
+	if (ball_pos.y > paddle_pos.y):
+		return PLAYER_MOVEMENTS.UP
+	else:
+		return PLAYER_MOVEMENTS.DOWN
