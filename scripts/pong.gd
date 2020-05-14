@@ -6,6 +6,7 @@ const PAD_SPEED = 150 # px/s
 enum PLAYER_MOVEMENTS {
 	UP,
 	DOWN,
+	NONE,
 }
 
 # Declare member variables here. Examples:
@@ -82,11 +83,22 @@ func _process(delta):
 
 
 func player_ai(ball_pos, prev_ball_pos, paddle_pos):
-	var ball_y_prediction = predict(ball_pos, prev_ball_pos, paddle_pos.x)
-	if (ball_y_prediction > paddle_pos.y):
-		return PLAYER_MOVEMENTS.UP
+	# If ball is going away, we try to center our paddle, otherwise we predict
+	# where the ball will go and go there.
+	var y_dest
+	if abs(paddle_pos.x - ball_pos.x) < abs(paddle_pos.x - prev_ball_pos.x):
+		y_dest = predict(ball_pos, prev_ball_pos, paddle_pos.x)
 	else:
+		y_dest = get_viewport().size.y / 2
+
+	var paddle_lower_limit = int(paddle_pos.y - pad_size.y / 4)
+	var paddle_upper_limit = int(paddle_pos.y + pad_size.y / 4)
+	if y_dest > paddle_upper_limit:
+		return PLAYER_MOVEMENTS.UP
+	elif y_dest < paddle_lower_limit:
 		return PLAYER_MOVEMENTS.DOWN
+	else:
+		return PLAYER_MOVEMENTS.NONE
 
 func predict(curr_pos, prev_pos, x_intersect):
 	var y_2 = curr_pos.y
