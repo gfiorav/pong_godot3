@@ -51,8 +51,8 @@ func _ready():
 	right_score_label = get_node("rightscore")
 	rnd = RandomNumberGenerator.new()
 	rnd.randomize()
-	moved_in_round = false
 	ai_difficulty = AI_DIFFICULTY.EASY
+	ai_takeover()
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -91,7 +91,7 @@ func _process(delta):
 
 		ball_pos = screen_size*0.5
 		ball_speed = INITIAL_BALL_SPEED
-		moved_in_round = false
+		ai_takeover()
 
 	# Set new position to ball.
 	get_node("ball").position = ball_pos
@@ -103,10 +103,8 @@ func _process(delta):
 
 	var left_movement
 	if player_movement == PLAYER_MOVEMENTS.NONE and !moved_in_round:
-		get_node("playercontrol").text = str(" AI (diff: " + str(ai_difficulty) + ")")
-		left_movement = player_ai(ball_pos, previous_ball_pos, get_node("left").position, AI_DIFFICULTY.EASY)
+		left_movement = player_ai(ball_pos, previous_ball_pos, get_node("left").position, ai_difficulty)
 	else:
-		get_node("playercontrol").text = str(" HUMAN")
 		left_movement = player_movement
 
 	if (left_pos.y > left_rect.size.y / 2 and left_movement == PLAYER_MOVEMENTS.UP):
@@ -116,10 +114,20 @@ func _process(delta):
 
 	get_node("left").position = left_pos
 
+	# Update phantom AI paddle.
+	var phantom_ai_movement = player_ai(ball_pos, previous_ball_pos, get_node("phantom").position, AI_DIFFICULTY.IMPOSSIBLE)
+	var phantom_pos = get_node("phantom").position
+	if (phantom_pos.y > left_rect.size.y / 2 and phantom_ai_movement == PLAYER_MOVEMENTS.UP):
+		phantom_pos.y += -PAD_SPEED * delta
+	if (phantom_pos.y < screen_size.y - left_rect.size.y / 2 and phantom_ai_movement == PLAYER_MOVEMENTS.DOWN):
+		phantom_pos.y += PAD_SPEED * delta
+
+	get_node("phantom").position = phantom_pos
+
 	# Move right pad - AI
 	var right_pos = get_node("right").position
 
-	var right_ai_movement = player_ai(ball_pos, previous_ball_pos, get_node("right").position, AI_DIFFICULTY.EASY)
+	var right_ai_movement = player_ai(ball_pos, previous_ball_pos, get_node("right").position, ai_difficulty)
 	if (right_pos.y > right_rect.size.y / 2 and right_ai_movement == PLAYER_MOVEMENTS.UP):
 		right_pos.y += -PAD_SPEED * delta
 	if (right_pos.y < screen_size.y - right_rect.size.y / 2 and right_ai_movement == PLAYER_MOVEMENTS.DOWN):
@@ -129,10 +137,10 @@ func _process(delta):
 
 func player_movement():
 	if Input.is_action_pressed("down"):
-		moved_in_round = true
+		player_takeover()
 		return PLAYER_MOVEMENTS.DOWN
 	elif Input.is_action_pressed("up"):
-		moved_in_round = true
+		player_takeover()
 		return PLAYER_MOVEMENTS.UP
 	else:
 		return PLAYER_MOVEMENTS.NONE
@@ -177,3 +185,15 @@ func predict(curr_pos, prev_pos, x_intersect):
 		reflected_y = vertical_size - (reflected_y % vertical_size)
 
 	return reflected_y
+
+func ai_takeover():
+	ai_difficulty = AI_DIFFICULTY.IMPOSSIBLE
+	moved_in_round = false
+	get_node("playercontrol").text = str("AI (diff: " + str(ai_difficulty) + ")")
+	get_node("phantom").visible = false
+
+func player_takeover():
+	ai_difficulty = AI_DIFFICULTY.MEDIUM
+	moved_in_round = true
+	get_node("playercontrol").text = str("HUMAN")
+	get_node("phantom").visible = true
