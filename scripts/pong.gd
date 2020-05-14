@@ -15,12 +15,20 @@ var pad_size
 var direction = Vector2(1.0, 1.0)
 var ball_speed = INITIAL_BALL_SPEED
 var previous_ball_pos = Vector2(1, 1)
+var left_score
+var right_score
+var left_score_label
+var right_score_label
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	screen_size = get_viewport().size
 	pad_size = get_node("left").get_texture().get_size()
 	set_process(true)
+	left_score = 0
+	right_score = 0
+	left_score_label = get_node("leftscore")
+	right_score_label = get_node("rightscore")
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -49,8 +57,12 @@ func _process(delta):
 	if (ball_pos.x < 0 or ball_pos.x > screen_size.x):
         # Serve ball to loser
 		if (ball_pos.x < 0):
+			right_score += 1
+			right_score_label.text = str(right_score)
 			direction = Vector2(-1, 0)
 		else:
+			left_score += 1
+			left_score_label.text = str(left_score)
 			direction = Vector2(1, 0)
 
 		ball_pos = screen_size*0.5
