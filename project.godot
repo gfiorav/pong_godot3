@@ -23,6 +23,7 @@ config/icon="res://icon.png"
 
 window/size/width=640
 window/size/height=400
+window/size/resizable=false
 
 [input]
 
@@ -49,5 +50,5 @@ right_move_down={
 
 [rendering]
 
-environment/default_clear_color=Color( 0, 0, 0, 1 )
+environment/default_clear_color=Color( 1, 1, 1, 1 )
 environment/default_environment="res://default_env.tres"
