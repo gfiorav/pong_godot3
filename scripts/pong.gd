@@ -9,16 +9,34 @@ enum PLAYER_MOVEMENTS {
 	NONE,
 }
 
+enum AI_DIFFICULTY {
+	IMPOSSIBLE,
+	HARD,
+	MEDIUM,
+	EASY,
+}
+
+const AI_DIFFICULTY_MAP = {
+	AI_DIFFICULTY.IMPOSSIBLE: 0.0,
+	AI_DIFFICULTY.HARD: 0.25,
+	AI_DIFFICULTY.MEDIUM: 0.5,
+	AI_DIFFICULTY.EASY: 0.70,
+}
+
+# Whether AI should play against itself
+const SKYNET = false
+
 # Declare member variables here. Examples:
 var screen_size
 var pad_size
-var direction = Vector2(1.0, 1.0)
+var direction = Vector2(1.0, 0.0)
 var ball_speed = INITIAL_BALL_SPEED
 var previous_ball_pos = Vector2(1, 1)
 var left_score
 var right_score
 var left_score_label
 var right_score_label
+var rnd
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -29,6 +47,8 @@ func _ready():
 	right_score = 0
 	left_score_label = get_node("leftscore")
 	right_score_label = get_node("rightscore")
+	rnd = RandomNumberGenerator.new()
+	rnd.randomize()
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -74,7 +94,7 @@ func _process(delta):
 	# Move left pad - AI
 	var left_pos = get_node("left").position
 
-	var left_ai_movement = player_ai(ball_pos, previous_ball_pos, get_node("left").position)
+	var left_ai_movement = player_ai(ball_pos, previous_ball_pos, get_node("left").position, AI_DIFFICULTY.EASY)
 	if (left_pos.y > left_rect.size.y / 2 and left_ai_movement == PLAYER_MOVEMENTS.DOWN):
 		left_pos.y += -PAD_SPEED * delta
 	if (left_pos.y < screen_size.y - left_rect.size.y / 2 and left_ai_movement == PLAYER_MOVEMENTS.UP):
@@ -85,20 +105,36 @@ func _process(delta):
 	# Move right pad - AI too
 	var right_pos = get_node("right").position
 
-	var right_ai_movement = player_ai(ball_pos, previous_ball_pos, get_node("right").position)
-	if (right_pos.y > right_rect.size.y / 2 and right_ai_movement == PLAYER_MOVEMENTS.DOWN):
+	var right_movement
+	if SKYNET:
+		right_movement = player_ai(ball_pos, previous_ball_pos, get_node("right").position, AI_DIFFICULTY.EASY)
+	else:
+		right_movement = player_movement()
+
+	if (right_pos.y > right_rect.size.y / 2 and right_movement == PLAYER_MOVEMENTS.UP):
 		right_pos.y += -PAD_SPEED * delta
-	if (right_pos.y < screen_size.y - right_rect.size.y / 2 and right_ai_movement == PLAYER_MOVEMENTS.UP):
+	if (right_pos.y < screen_size.y - right_rect.size.y / 2 and right_movement == PLAYER_MOVEMENTS.DOWN):
 		right_pos.y += PAD_SPEED * delta
 
 	get_node("right").position = right_pos
 
+func player_movement():
+	if Input.is_action_pressed("right_move_down"):
+		return PLAYER_MOVEMENTS.DOWN
+	elif Input.is_action_pressed("right_move_up"):
+		return PLAYER_MOVEMENTS.UP
+	else:
+		return PLAYER_MOVEMENTS.NONE
 
-func player_ai(ball_pos, prev_ball_pos, paddle_pos):
+func player_ai(ball_pos, prev_ball_pos, paddle_pos, difficulty):
 	# If ball is going away, we try to center our paddle, otherwise we predict
 	# where the ball will go and go there.
 	var y_dest
 	if abs(paddle_pos.x - ball_pos.x) < abs(paddle_pos.x - prev_ball_pos.x):
+		# Let's add a chance that we won't do anything.
+		if (rnd.randf() <= AI_DIFFICULTY_MAP[difficulty]):
+			return PLAYER_MOVEMENTS.NONE
+
 		y_dest = predict(ball_pos, prev_ball_pos, paddle_pos.x)
 	else:
 		y_dest = get_viewport().size.y / 2
