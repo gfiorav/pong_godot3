@@ -10,10 +10,10 @@ enum PLAYER_MOVEMENTS {
 }
 
 enum AI_DIFFICULTY {
-	IMPOSSIBLE,
-	HARD,
-	MEDIUM,
 	EASY,
+	MEDIUM,
+	HARD,
+	IMPOSSIBLE,
 }
 
 const AI_DIFFICULTY_MAP = {
@@ -37,6 +37,8 @@ var right_score
 var left_score_label
 var right_score_label
 var rnd
+var moved_in_round
+var ai_difficulty
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -49,6 +51,8 @@ func _ready():
 	right_score_label = get_node("rightscore")
 	rnd = RandomNumberGenerator.new()
 	rnd.randomize()
+	moved_in_round = false
+	ai_difficulty = AI_DIFFICULTY.EASY
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -87,6 +91,7 @@ func _process(delta):
 
 		ball_pos = screen_size*0.5
 		ball_speed = INITIAL_BALL_SPEED
+		moved_in_round = false
 
 	# Set new position to ball.
 	get_node("ball").position = ball_pos
@@ -94,11 +99,15 @@ func _process(delta):
 	# Move left pad - Human (or AI if inactive)
 	var left_pos = get_node("left").position
 
+	var player_movement = player_movement()
+
 	var left_movement
-	if SKYNET:
+	if player_movement == PLAYER_MOVEMENTS.NONE and !moved_in_round:
+		get_node("playercontrol").text = str(" AI (diff: " + str(ai_difficulty) + ")")
 		left_movement = player_ai(ball_pos, previous_ball_pos, get_node("left").position, AI_DIFFICULTY.EASY)
 	else:
-		left_movement = player_movement()
+		get_node("playercontrol").text = str(" HUMAN")
+		left_movement = player_movement
 
 	if (left_pos.y > left_rect.size.y / 2 and left_movement == PLAYER_MOVEMENTS.UP):
 		left_pos.y += -PAD_SPEED * delta
@@ -111,17 +120,19 @@ func _process(delta):
 	var right_pos = get_node("right").position
 
 	var right_ai_movement = player_ai(ball_pos, previous_ball_pos, get_node("right").position, AI_DIFFICULTY.EASY)
-	if (right_pos.y > right_rect.size.y / 2 and right_ai_movement == PLAYER_MOVEMENTS.DOWN):
+	if (right_pos.y > right_rect.size.y / 2 and right_ai_movement == PLAYER_MOVEMENTS.UP):
 		right_pos.y += -PAD_SPEED * delta
-	if (right_pos.y < screen_size.y - right_rect.size.y / 2 and right_ai_movement == PLAYER_MOVEMENTS.UP):
+	if (right_pos.y < screen_size.y - right_rect.size.y / 2 and right_ai_movement == PLAYER_MOVEMENTS.DOWN):
 		right_pos.y += PAD_SPEED * delta
 
 	get_node("right").position = right_pos
 
 func player_movement():
 	if Input.is_action_pressed("down"):
+		moved_in_round = true
 		return PLAYER_MOVEMENTS.DOWN
 	elif Input.is_action_pressed("up"):
+		moved_in_round = true
 		return PLAYER_MOVEMENTS.UP
 	else:
 		return PLAYER_MOVEMENTS.NONE
@@ -142,9 +153,9 @@ func player_ai(ball_pos, prev_ball_pos, paddle_pos, difficulty):
 	var paddle_lower_limit = int(paddle_pos.y - pad_size.y / 4)
 	var paddle_upper_limit = int(paddle_pos.y + pad_size.y / 4)
 	if y_dest > paddle_upper_limit:
-		return PLAYER_MOVEMENTS.UP
-	elif y_dest < paddle_lower_limit:
 		return PLAYER_MOVEMENTS.DOWN
+	elif y_dest < paddle_lower_limit:
+		return PLAYER_MOVEMENTS.UP
 	else:
 		return PLAYER_MOVEMENTS.NONE
 
