@@ -91,37 +91,37 @@ func _process(delta):
 	# Set new position to ball.
 	get_node("ball").position = ball_pos
 
-	# Move left pad - AI
+	# Move left pad - Human (or AI if inactive)
 	var left_pos = get_node("left").position
 
-	var left_ai_movement = player_ai(ball_pos, previous_ball_pos, get_node("left").position, AI_DIFFICULTY.EASY)
-	if (left_pos.y > left_rect.size.y / 2 and left_ai_movement == PLAYER_MOVEMENTS.DOWN):
+	var left_movement
+	if SKYNET:
+		left_movement = player_ai(ball_pos, previous_ball_pos, get_node("left").position, AI_DIFFICULTY.EASY)
+	else:
+		left_movement = player_movement()
+
+	if (left_pos.y > left_rect.size.y / 2 and left_movement == PLAYER_MOVEMENTS.UP):
 		left_pos.y += -PAD_SPEED * delta
-	if (left_pos.y < screen_size.y - left_rect.size.y / 2 and left_ai_movement == PLAYER_MOVEMENTS.UP):
+	if (left_pos.y < screen_size.y - left_rect.size.y / 2 and left_movement == PLAYER_MOVEMENTS.DOWN):
 		left_pos.y += PAD_SPEED * delta
 
 	get_node("left").position = left_pos
 
-	# Move right pad - AI too
+	# Move right pad - AI
 	var right_pos = get_node("right").position
 
-	var right_movement
-	if SKYNET:
-		right_movement = player_ai(ball_pos, previous_ball_pos, get_node("right").position, AI_DIFFICULTY.EASY)
-	else:
-		right_movement = player_movement()
-
-	if (right_pos.y > right_rect.size.y / 2 and right_movement == PLAYER_MOVEMENTS.UP):
+	var right_ai_movement = player_ai(ball_pos, previous_ball_pos, get_node("right").position, AI_DIFFICULTY.EASY)
+	if (right_pos.y > right_rect.size.y / 2 and right_ai_movement == PLAYER_MOVEMENTS.DOWN):
 		right_pos.y += -PAD_SPEED * delta
-	if (right_pos.y < screen_size.y - right_rect.size.y / 2 and right_movement == PLAYER_MOVEMENTS.DOWN):
+	if (right_pos.y < screen_size.y - right_rect.size.y / 2 and right_ai_movement == PLAYER_MOVEMENTS.UP):
 		right_pos.y += PAD_SPEED * delta
 
 	get_node("right").position = right_pos
 
 func player_movement():
-	if Input.is_action_pressed("right_move_down"):
+	if Input.is_action_pressed("down"):
 		return PLAYER_MOVEMENTS.DOWN
-	elif Input.is_action_pressed("right_move_up"):
+	elif Input.is_action_pressed("up"):
 		return PLAYER_MOVEMENTS.UP
 	else:
 		return PLAYER_MOVEMENTS.NONE
