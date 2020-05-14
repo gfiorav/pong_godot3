@@ -2,6 +2,8 @@ extends Node2D
 
 const INITIAL_BALL_SPEED = 120 # px/s
 const PAD_SPEED = 200 # px/s
+const SCREEN_WIDTH = 640
+const SCREEN_HEIGHT = 400
 
 enum PLAYER_MOVEMENTS {
 	UP,
@@ -42,7 +44,7 @@ var ai_difficulty
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	screen_size = get_viewport().size
+	screen_size = Vector2(SCREEN_WIDTH, SCREEN_HEIGHT)
 	pad_size = get_node("left").get_texture().get_size()
 	set_process(true)
 	left_score = 0
@@ -156,7 +158,7 @@ func player_ai(ball_pos, prev_ball_pos, paddle_pos, difficulty):
 
 		y_dest = predict(ball_pos, prev_ball_pos, paddle_pos.x)
 	else:
-		y_dest = get_viewport().size.y / 2
+		y_dest = screen_size.y / 2
 
 	var paddle_lower_limit = int(paddle_pos.y - pad_size.y / 4)
 	var paddle_upper_limit = int(paddle_pos.y + pad_size.y / 4)
@@ -180,7 +182,7 @@ func predict(curr_pos, prev_pos, x_intersect):
 	var y = (((y_2 - y_1) / (x_2 - x_1)) * (x_intersect - x_1)) + y_1
 	var reflected_y = int(abs(y))
 
-	var vertical_size = int(abs(get_viewport().size.y))
+	var vertical_size = int(abs(screen_size.y))
 	if (reflected_y > vertical_size):
 		reflected_y = vertical_size - (reflected_y % vertical_size)
 
