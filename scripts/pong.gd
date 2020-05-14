@@ -1,7 +1,7 @@
 extends Node2D
 
 const INITIAL_BALL_SPEED = 80 # px/s
-const PAD_SPEED = 150 # px/s
+const PAD_SPEED = 200 # px/s
 
 enum PLAYER_MOVEMENTS {
 	UP,
