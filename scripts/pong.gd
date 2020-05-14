@@ -99,5 +99,10 @@ func predict(curr_pos, prev_pos, x_intersect):
 		x_1 += 1
 
 	var y = (((y_2 - y_1) / (x_2 - x_1)) * (x_intersect - x_1)) + y_1
+	var reflected_y = int(abs(y))
 
-	return y
+	var vertical_size = int(abs(get_viewport().size.y))
+	if (reflected_y > vertical_size):
+		reflected_y = vertical_size - (reflected_y % vertical_size)
+
+	return reflected_y
