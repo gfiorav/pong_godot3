@@ -5,10 +5,18 @@ const PAD_SPEED = 200 # px/s
 const SCREEN_WIDTH = 640
 const SCREEN_HEIGHT = 400
 
+var PlayModule = load("res://scripts/play.gd")
+
 enum PLAYER_MOVEMENTS {
 	UP,
 	DOWN,
 	NONE,
+}
+
+const PLAYER_MOVEMENTS_MAP = {
+	PLAYER_MOVEMENTS.UP: 1,
+	PLAYER_MOVEMENTS.DOWN: 2,
+	PLAYER_MOVEMENTS.NONE: 0,
 }
 
 enum AI_DIFFICULTY {
@@ -41,9 +49,11 @@ var right_score_label
 var rnd
 var moved_in_round
 var ai_difficulty
+var current_play
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	print(OS.get_user_data_dir())
 	screen_size = Vector2(SCREEN_WIDTH, SCREEN_HEIGHT)
 	pad_size = get_node("left").get_texture().get_size()
 	set_process(true)
@@ -55,6 +65,7 @@ func _ready():
 	rnd.randomize()
 	ai_difficulty = AI_DIFFICULTY.EASY
 	ai_takeover()
+	current_play = PlayModule.Play.new()
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -81,19 +92,23 @@ func _process(delta):
 
 	# Check gameover
 	if (ball_pos.x < 0 or ball_pos.x > screen_size.x):
-        # Serve ball to loser
+		# Serve ball to loser
 		if (ball_pos.x < 0):
 			right_score += 1
 			right_score_label.text = str(right_score)
 			direction = Vector2(-1, 0)
+			current_play.label = str(0)
 		else:
 			left_score += 1
 			left_score_label.text = str(left_score)
 			direction = Vector2(1, 0)
+			current_play.label = str(1)
 
 		ball_pos = screen_size*0.5
 		ball_speed = INITIAL_BALL_SPEED
 		ai_takeover()
+		current_play.export()
+		current_play.reset()
 
 	# Set new position to ball.
 	get_node("ball").position = ball_pos
@@ -136,6 +151,19 @@ func _process(delta):
 		right_pos.y += PAD_SPEED * delta
 
 	get_node("right").position = right_pos
+
+	# Record frame
+	current_play.add_frame(
+		ball_pos.x,
+		ball_pos.y,
+		ball_speed,
+		direction.x,
+		direction.y,
+		left_pos.y,
+		right_pos.y,
+		PLAYER_MOVEMENTS_MAP[left_movement],
+		PLAYER_MOVEMENTS_MAP[right_ai_movement]
+	)
 
 func player_movement():
 	if Input.is_action_pressed("down"):
