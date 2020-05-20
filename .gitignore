@@ -12,4 +12,6 @@ assets/*.import
 # Mono-specific ignores
 .mono/
 
+tensorflow/venv
+
 # End of https://www.gitignore.io/api/godot
